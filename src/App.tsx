@@ -1,5 +1,9 @@
 import { useState } from 'react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
+import DatePicker from 'react-datepicker'
+import RichTextEditor from './components/RichTextEditor'
+import { ThemeProvider, useTheme } from './context/ThemeContext'
+import "react-datepicker/dist/react-datepicker.css"
 import './App.css'
 
 interface Task {
@@ -7,6 +11,7 @@ interface Task {
   title: string;
   description: string;
   assignee: string;
+  dueDate: Date | null;
   completed: boolean;
   isEditing?: boolean;
 }
@@ -17,7 +22,8 @@ interface Column {
   tasks: Task[];
 }
 
-function App() {
+function AppContent() {
+  const { isDarkMode, toggleTheme } = useTheme();
   const [columns, setColumns] = useState<Column[]>([
     {
       id: 'todo',
@@ -38,7 +44,8 @@ function App() {
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
-    assignee: ''
+    assignee: '',
+    dueDate: null as Date | null
   })
 
   const addTask = (e: React.FormEvent) => {
@@ -49,6 +56,7 @@ function App() {
         title: newTask.title.trim(),
         description: newTask.description.trim(),
         assignee: newTask.assignee.trim(),
+        dueDate: newTask.dueDate,
         completed: false,
         isEditing: false
       }
@@ -57,7 +65,7 @@ function App() {
           ? { ...column, tasks: [...column.tasks, newTaskObj] }
           : column
       ))
-      setNewTask({ title: '', description: '', assignee: '' })
+      setNewTask({ title: '', description: '', assignee: '', dueDate: null })
     }
   }
 
@@ -88,6 +96,15 @@ function App() {
         task.id === taskId ? { ...task, isEditing: false } : task
       )
     })))
+  }
+
+  const formatDate = (date: Date | null) => {
+    if (!date) return ''
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }).format(date)
   }
 
   const onDragEnd = (result: DropResult) => {
@@ -123,7 +140,16 @@ function App() {
 
   return (
     <div className="container">
-      <h1>✨ Todo App</h1>
+      <div className="header">
+        <h1>✨ Todo App</h1>
+        <button 
+          className="theme-toggle"
+          onClick={toggleTheme}
+          aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
+        >
+          {isDarkMode ? '☀️' : '🌙'}
+        </button>
+      </div>
       
       <form onSubmit={addTask} className="task-form">
         <div className="form-group">
@@ -134,20 +160,27 @@ function App() {
             placeholder="Task title..."
             className="input"
           />
-          <input
-            type="text"
-            value={newTask.description}
-            onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-            placeholder="Description..."
-            className="input"
+          <RichTextEditor
+            content={newTask.description}
+            onChange={(content) => setNewTask({ ...newTask, description: content })}
           />
-          <input
-            type="text"
-            value={newTask.assignee}
-            onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })}
-            placeholder="Assignee..."
-            className="input"
-          />
+          <div className="form-row">
+            <input
+              type="text"
+              value={newTask.assignee}
+              onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })}
+              placeholder="Assignee..."
+              className="input"
+            />
+            <DatePicker
+              selected={newTask.dueDate}
+              onChange={(date) => setNewTask({ ...newTask, dueDate: date })}
+              placeholderText="Due date..."
+              className="input date-picker"
+              dateFormat="MMM d, yyyy"
+              minDate={new Date()}
+            />
+          </div>
         </div>
         <button type="submit" className="btn">Add Task</button>
       </form>
@@ -189,26 +222,56 @@ function App() {
                                   className="input"
                                   placeholder="Task title..."
                                 />
-                                <input
-                                  type="text"
-                                  defaultValue={task.description}
-                                  className="input"
-                                  placeholder="Description..."
+                                <RichTextEditor
+                                  content={task.description}
+                                  onChange={(content) => {
+                                    const title = (document.querySelector(`#task-${task.id} .input:nth-child(1)`) as HTMLInputElement).value;
+                                    const assignee = (document.querySelector(`#task-${task.id} .input:nth-child(3)`) as HTMLInputElement).value;
+                                    saveEdit(task.id, { 
+                                      title, 
+                                      description: content, 
+                                      assignee,
+                                      dueDate: task.dueDate 
+                                    });
+                                  }}
                                 />
-                                <input
-                                  type="text"
-                                  defaultValue={task.assignee}
-                                  className="input"
-                                  placeholder="Assignee..."
-                                />
+                                <div className="form-row">
+                                  <input
+                                    type="text"
+                                    defaultValue={task.assignee}
+                                    className="input"
+                                    placeholder="Assignee..."
+                                  />
+                                  <DatePicker
+                                    selected={task.dueDate}
+                                    onChange={(date) => {
+                                      const title = (document.querySelector(`#task-${task.id} .input:nth-child(1)`) as HTMLInputElement).value;
+                                      const assignee = (document.querySelector(`#task-${task.id} .input:nth-child(3)`) as HTMLInputElement).value;
+                                      saveEdit(task.id, { 
+                                        title, 
+                                        description: task.description, 
+                                        assignee,
+                                        dueDate: date 
+                                      });
+                                    }}
+                                    placeholderText="Due date..."
+                                    className="input date-picker"
+                                    dateFormat="MMM d, yyyy"
+                                    minDate={new Date()}
+                                  />
+                                </div>
                                 <div className="edit-buttons">
                                   <button 
                                     className="btn btn-save"
                                     onClick={() => {
                                       const title = (document.querySelector(`#task-${task.id} .input:nth-child(1)`) as HTMLInputElement).value;
-                                      const description = (document.querySelector(`#task-${task.id} .input:nth-child(2)`) as HTMLInputElement).value;
                                       const assignee = (document.querySelector(`#task-${task.id} .input:nth-child(3)`) as HTMLInputElement).value;
-                                      saveEdit(task.id, { title, description, assignee });
+                                      saveEdit(task.id, { 
+                                        title, 
+                                        description: task.description, 
+                                        assignee,
+                                        dueDate: task.dueDate 
+                                      });
                                     }}
                                   >
                                     Save
@@ -232,14 +295,19 @@ function App() {
                                     ✏️
                                   </button>
                                 </div>
-                                {task.description && (
-                                  <p className="task-description">{task.description}</p>
-                                )}
-                                {task.assignee && (
-                                  <div className="task-assignee">
-                                    👤 {task.assignee}
-                                  </div>
-                                )}
+                                <div className="task-description" dangerouslySetInnerHTML={{ __html: task.description }} />
+                                <div className="task-footer">
+                                  {task.assignee && (
+                                    <div className="task-assignee">
+                                      👤 {task.assignee}
+                                    </div>
+                                  )}
+                                  {task.dueDate && (
+                                    <div className="task-due-date">
+                                      📅 {formatDate(task.dueDate)}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )}
                           </div>
@@ -255,6 +323,14 @@ function App() {
         </div>
       </DragDropContext>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   )
 }
 
