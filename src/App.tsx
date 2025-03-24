@@ -4,7 +4,9 @@ import './App.css'
 
 interface Task {
   id: number;
-  text: string;
+  title: string;
+  description: string;
+  assignee: string;
   completed: boolean;
 }
 
@@ -22,23 +24,38 @@ function App() {
       tasks: []
     },
     {
+      id: 'in-progress',
+      title: 'In Progress',
+      tasks: []
+    },
+    {
       id: 'done',
       title: 'Done',
       tasks: []
     }
   ])
-  const [newTask, setNewTask] = useState('')
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    assignee: ''
+  })
 
   const addTask = (e: React.FormEvent) => {
     e.preventDefault()
-    if (newTask.trim()) {
-      const newTaskObj = { id: Date.now(), text: newTask.trim(), completed: false }
+    if (newTask.title.trim()) {
+      const newTaskObj = { 
+        id: Date.now(), 
+        title: newTask.title.trim(),
+        description: newTask.description.trim(),
+        assignee: newTask.assignee.trim(),
+        completed: false 
+      }
       setColumns(columns.map(column => 
         column.id === 'todo' 
           ? { ...column, tasks: [...column.tasks, newTaskObj] }
           : column
       ))
-      setNewTask('')
+      setNewTask({ title: '', description: '', assignee: '' })
     }
   }
 
@@ -75,16 +92,32 @@ function App() {
 
   return (
     <div className="container">
-      <h1>Todo App</h1>
+      <h1>✨ Todo App</h1>
       
       <form onSubmit={addTask} className="task-form">
-        <input
-          type="text"
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-          placeholder="Add a new task..."
-          className="input"
-        />
+        <div className="form-group">
+          <input
+            type="text"
+            value={newTask.title}
+            onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+            placeholder="Task title..."
+            className="input"
+          />
+          <input
+            type="text"
+            value={newTask.description}
+            onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+            placeholder="Description..."
+            className="input"
+          />
+          <input
+            type="text"
+            value={newTask.assignee}
+            onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })}
+            placeholder="Assignee..."
+            className="input"
+          />
+        </div>
         <button type="submit" className="btn">Add Task</button>
       </form>
 
@@ -92,7 +125,11 @@ function App() {
         <div className="columns">
           {columns.map(column => (
             <div key={column.id} className="column">
-              <h2 className="column-title">{column.title}</h2>
+              <h2 className="column-title">
+                {column.id === 'todo' ? '📝 To Do' : 
+                 column.id === 'in-progress' ? '⚡ In Progress' : 
+                 '✅ Done'}
+              </h2>
               <Droppable droppableId={column.id}>
                 {(provided, snapshot) => (
                   <div
@@ -113,9 +150,17 @@ function App() {
                             {...provided.dragHandleProps}
                             className={`task-item ${snapshot.isDragging ? 'dragging' : ''}`}
                           >
-                            <span className={task.completed ? 'completed' : ''}>
-                              {task.text}
-                            </span>
+                            <div className="task-content">
+                              <h3 className={task.completed ? 'completed' : ''}>{task.title}</h3>
+                              {task.description && (
+                                <p className="task-description">{task.description}</p>
+                              )}
+                              {task.assignee && (
+                                <div className="task-assignee">
+                                  👤 {task.assignee}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
                       </Draggable>
