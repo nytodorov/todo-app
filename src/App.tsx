@@ -8,6 +8,7 @@ interface Task {
   description: string;
   assignee: string;
   completed: boolean;
+  isEditing?: boolean;
 }
 
 interface Column {
@@ -48,7 +49,8 @@ function App() {
         title: newTask.title.trim(),
         description: newTask.description.trim(),
         assignee: newTask.assignee.trim(),
-        completed: false 
+        completed: false,
+        isEditing: false
       }
       setColumns(columns.map(column => 
         column.id === 'todo' 
@@ -57,6 +59,35 @@ function App() {
       ))
       setNewTask({ title: '', description: '', assignee: '' })
     }
+  }
+
+  const startEditing = (taskId: number) => {
+    setColumns(columns.map(column => ({
+      ...column,
+      tasks: column.tasks.map(task => 
+        task.id === taskId ? { ...task, isEditing: true } : task
+      )
+    })))
+  }
+
+  const saveEdit = (taskId: number, editedTask: Omit<Task, 'id' | 'completed' | 'isEditing'>) => {
+    setColumns(columns.map(column => ({
+      ...column,
+      tasks: column.tasks.map(task => 
+        task.id === taskId 
+          ? { ...task, ...editedTask, isEditing: false }
+          : task
+      )
+    })))
+  }
+
+  const cancelEdit = (taskId: number) => {
+    setColumns(columns.map(column => ({
+      ...column,
+      tasks: column.tasks.map(task => 
+        task.id === taskId ? { ...task, isEditing: false } : task
+      )
+    })))
   }
 
   const onDragEnd = (result: DropResult) => {
@@ -150,17 +181,67 @@ function App() {
                             {...provided.dragHandleProps}
                             className={`task-item ${snapshot.isDragging ? 'dragging' : ''}`}
                           >
-                            <div className="task-content">
-                              <h3 className={task.completed ? 'completed' : ''}>{task.title}</h3>
-                              {task.description && (
-                                <p className="task-description">{task.description}</p>
-                              )}
-                              {task.assignee && (
-                                <div className="task-assignee">
-                                  👤 {task.assignee}
+                            {task.isEditing ? (
+                              <div className="task-edit-form">
+                                <input
+                                  type="text"
+                                  defaultValue={task.title}
+                                  className="input"
+                                  placeholder="Task title..."
+                                />
+                                <input
+                                  type="text"
+                                  defaultValue={task.description}
+                                  className="input"
+                                  placeholder="Description..."
+                                />
+                                <input
+                                  type="text"
+                                  defaultValue={task.assignee}
+                                  className="input"
+                                  placeholder="Assignee..."
+                                />
+                                <div className="edit-buttons">
+                                  <button 
+                                    className="btn btn-save"
+                                    onClick={() => {
+                                      const title = (document.querySelector(`#task-${task.id} .input:nth-child(1)`) as HTMLInputElement).value;
+                                      const description = (document.querySelector(`#task-${task.id} .input:nth-child(2)`) as HTMLInputElement).value;
+                                      const assignee = (document.querySelector(`#task-${task.id} .input:nth-child(3)`) as HTMLInputElement).value;
+                                      saveEdit(task.id, { title, description, assignee });
+                                    }}
+                                  >
+                                    Save
+                                  </button>
+                                  <button 
+                                    className="btn btn-cancel"
+                                    onClick={() => cancelEdit(task.id)}
+                                  >
+                                    Cancel
+                                  </button>
                                 </div>
-                              )}
-                            </div>
+                              </div>
+                            ) : (
+                              <div className="task-content" id={`task-${task.id}`}>
+                                <div className="task-header">
+                                  <h3 className={task.completed ? 'completed' : ''}>{task.title}</h3>
+                                  <button 
+                                    className="btn-edit"
+                                    onClick={() => startEditing(task.id)}
+                                  >
+                                    ✏️
+                                  </button>
+                                </div>
+                                {task.description && (
+                                  <p className="task-description">{task.description}</p>
+                                )}
+                                {task.assignee && (
+                                  <div className="task-assignee">
+                                    👤 {task.assignee}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </Draggable>
