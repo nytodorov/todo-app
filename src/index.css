@@ -1,0 +1,177 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-color: #646cff;
+  --primary-hover: #535bf2;
+  --danger-color: #ef4444;
+  --danger-hover: #dc2626;
+  --background-color: #ffffff;
+  --text-color: #213547;
+  --border-color: #e5e7eb;
+  --input-background: #f9fafb;
+  --column-background: #f3f4f6;
+  --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --card-hover-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color: #1a1a1a;
+    --text-color: rgba(255, 255, 255, 0.87);
+    --border-color: #404040;
+    --input-background: #2a2a2a;
+    --column-background: #2a2a2a;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text-color);
+  background-color: var(--background-color);
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--primary-color);
+  font-size: 2.5rem;
+}
+
+.task-form {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 2rem;
+  background-color: var(--column-background);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+}
+
+.input {
+  flex: 1;
+  padding: 0.8em 1.2em;
+  font-size: 1em;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--input-background);
+  color: var(--text-color);
+  transition: border-color 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.btn {
+  border-radius: 8px;
+  border: none;
+  padding: 0.8em 1.5em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: var(--primary-color);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--card-shadow);
+}
+
+.btn:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--card-hover-shadow);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.column {
+  background-color: var(--column-background);
+  border-radius: 12px;
+  padding: 1.5rem;
+  min-height: 400px;
+  box-shadow: var(--card-shadow);
+}
+
+.column-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-color);
+  text-align: center;
+}
+
+.task-list {
+  min-height: 100px;
+  padding: 0.5rem;
+  transition: background-color 0.2s ease;
+  border-radius: 8px;
+}
+
+.task-list.droppable {
+  background-color: var(--primary-color);
+  opacity: 0.1;
+}
+
+.task-item {
+  background-color: var(--background-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  cursor: grab;
+  transition: all 0.2s ease;
+  box-shadow: var(--card-shadow);
+  user-select: none;
+  position: relative;
+  z-index: 1;
+}
+
+.task-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-hover-shadow);
+}
+
+.task-item:active {
+  cursor: grabbing;
+}
+
+.task-item.dragging {
+  background-color: var(--primary-color);
+  color: white;
+  transform: scale(1.02);
+  box-shadow: var(--card-hover-shadow);
+  z-index: 2;
+}
+
+.task-item span {
+  display: block;
+  font-size: 1.1em;
+}
+
+.task-item .completed {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
