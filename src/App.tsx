@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import DatePicker from 'react-datepicker'
 import RichTextEditor from './components/RichTextEditor'
+import CreateTaskDialog from './components/CreateTaskDialog'
 import { ThemeProvider, useTheme } from './context/ThemeContext'
 import "react-datepicker/dist/react-datepicker.css"
 import './App.css'
@@ -24,6 +25,7 @@ interface Column {
 
 function AppContent() {
   const { isDarkMode, toggleTheme } = useTheme();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [columns, setColumns] = useState<Column[]>([
     {
       id: 'todo',
@@ -41,32 +43,19 @@ function AppContent() {
       tasks: []
     }
   ])
-  const [newTask, setNewTask] = useState({
-    title: '',
-    description: '',
-    assignee: '',
-    dueDate: null as Date | null
-  })
 
-  const addTask = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (newTask.title.trim()) {
-      const newTaskObj = { 
-        id: Date.now(), 
-        title: newTask.title.trim(),
-        description: newTask.description.trim(),
-        assignee: newTask.assignee.trim(),
-        dueDate: newTask.dueDate,
-        completed: false,
-        isEditing: false
-      }
-      setColumns(columns.map(column => 
-        column.id === 'todo' 
-          ? { ...column, tasks: [...column.tasks, newTaskObj] }
-          : column
-      ))
-      setNewTask({ title: '', description: '', assignee: '', dueDate: null })
+  const addTask = (newTask: Omit<Task, 'id' | 'completed' | 'isEditing'>) => {
+    const newTaskObj = { 
+      id: Date.now(), 
+      ...newTask,
+      completed: false,
+      isEditing: false
     }
+    setColumns(columns.map(column => 
+      column.id === 'todo' 
+        ? { ...column, tasks: [...column.tasks, newTaskObj] }
+        : column
+    ))
   }
 
   const startEditing = (taskId: number) => {
@@ -150,40 +139,19 @@ function AppContent() {
           {isDarkMode ? '☀️' : '🌙'}
         </button>
       </div>
+
+      <CreateTaskDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSubmit={addTask}
+      />
       
-      <form onSubmit={addTask} className="task-form">
-        <div className="form-group">
-          <input
-            type="text"
-            value={newTask.title}
-            onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-            placeholder="Task title..."
-            className="input"
-          />
-          <RichTextEditor
-            content={newTask.description}
-            onChange={(content) => setNewTask({ ...newTask, description: content })}
-          />
-          <div className="form-row">
-            <input
-              type="text"
-              value={newTask.assignee}
-              onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })}
-              placeholder="Assignee..."
-              className="input"
-            />
-            <DatePicker
-              selected={newTask.dueDate}
-              onChange={(date) => setNewTask({ ...newTask, dueDate: date })}
-              placeholderText="Due date..."
-              className="input date-picker"
-              dateFormat="MMM d, yyyy"
-              minDate={new Date()}
-            />
-          </div>
-        </div>
-        <button type="submit" className="btn">Add Task</button>
-      </form>
+      <button
+        className="add-task-button standalone"
+        onClick={() => setIsDialogOpen(true)}
+      >
+        + Add New Task
+      </button>
 
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="columns">
